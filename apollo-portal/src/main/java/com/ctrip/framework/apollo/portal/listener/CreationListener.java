@@ -31,9 +31,11 @@ public class CreationListener {
   @EventListener
   public void onAppCreationEvent(AppCreationEvent event) {
     AppDTO appDTO = BeanUtils.transfrom(AppDTO.class, event.getApp());
+    // 获得有效的 Env 数组
     List<Env> envs = portalSettings.getActiveEnvs();
     for (Env env : envs) {
       try {
+        // 调用对应的 Admin Service 的 API ，创建 App 对象，从而同步 App 到 Config DB
         appAPI.createApp(env, appDTO);
       } catch (Throwable e) {
         logger.error("Create app failed. appId = {}, env = {})", appDTO.getAppId(), env, e);

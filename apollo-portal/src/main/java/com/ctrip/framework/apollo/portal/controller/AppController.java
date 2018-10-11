@@ -74,15 +74,18 @@ public class AppController {
     return appService.findByOwnerName(owner, page);
   }
 
+  /**
+   * TODO 为什么在Controller中调用多个Service
+   * @param appModel
+   * @return
+   */
   @RequestMapping(value = "", method = RequestMethod.POST)
   public App create(@RequestBody AppModel appModel) {
-
     App app = transformToApp(appModel);
-
+    // 保存App进PortalDB数据库
     App createdApp = appService.createAppInLocal(app);
-
+    // 发布一个AppCreationEvent事件 TODO Spring事件监听
     publisher.publishEvent(new AppCreationEvent(createdApp));
-
     Set<String> admins = appModel.getAdmins();
     if (!CollectionUtils.isEmpty(admins)) {
       rolePermissionService

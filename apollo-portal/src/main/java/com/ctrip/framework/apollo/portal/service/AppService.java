@@ -96,15 +96,18 @@ public class AppService {
     }
     app.setOwnerEmail(owner.getEmail());
 
+    // userInfoHolder
     String operator = userInfoHolder.getUser().getUserId();
     app.setDataChangeCreatedBy(operator);
     app.setDataChangeLastModifiedBy(operator);
 
     App createdApp = appRepository.save(app);
 
+    // create a default namespace
     appNamespaceService.createDefaultAppNamespace(appId);
+    // 初始化角色
     roleInitializationService.initAppRoles(createdApp);
-
+    // Tracer 输出日志，SPI可扩展使用CAT
     Tracer.logEvent(TracerEventType.CREATE_APP, appId);
 
     return createdApp;

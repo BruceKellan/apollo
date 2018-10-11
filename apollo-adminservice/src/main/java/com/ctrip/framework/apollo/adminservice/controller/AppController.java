@@ -36,6 +36,7 @@ public class AppController {
     if (!InputValidator.isValidClusterNamespace(dto.getAppId())) {
       throw new BadRequestException(String.format("AppId格式错误: %s", InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE));
     }
+    // 转换
     App entity = BeanUtils.transfrom(App.class, dto);
     App managedEntity = appService.findOne(entity.getAppId());
     if (managedEntity != null) {
@@ -43,7 +44,7 @@ public class AppController {
     }
 
     entity = adminService.createNewApp(entity);
-
+    // 转换
     dto = BeanUtils.transfrom(AppDTO.class, entity);
     return dto;
   }

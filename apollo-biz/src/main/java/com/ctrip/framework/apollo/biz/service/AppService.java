@@ -61,12 +61,11 @@ public class AppService {
     if (!isAppIdUnique(entity.getAppId())) {
       throw new ServiceException("appId not unique");
     }
-    entity.setId(0);//protection
+    // protection 保护代码，避免 App 对象中已经有 id 属性。
+    entity.setId(0);
     App app = appRepository.save(entity);
-    
     auditService.audit(App.class.getSimpleName(), app.getId(), Audit.OP.INSERT,
         app.getDataChangeCreatedBy());
-    
     return app;
   }
 
