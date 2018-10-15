@@ -30,9 +30,7 @@ public class ClusterService {
       throw new BadRequestException(String.format("cluster %s already exists.", cluster.getName()));
     }
     ClusterDTO clusterDTO = clusterAPI.create(env, cluster);
-
     Tracer.logEvent(TracerEventType.CREATE_CLUSTER, cluster.getAppId(), "0", cluster.getName());
-
     return clusterDTO;
   }
 

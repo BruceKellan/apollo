@@ -97,20 +97,15 @@ public class NamespaceController {
   @RequestMapping(value = "/apps/{appId}/namespaces", method = RequestMethod.POST)
   public ResponseEntity<Void> createNamespace(@PathVariable String appId,
                                               @RequestBody List<NamespaceCreationModel> models) {
-
     checkModel(!CollectionUtils.isEmpty(models));
-
     String namespaceName = models.get(0).getNamespace().getNamespaceName();
     String operator = userInfoHolder.getUser().getUserId();
-
     roleInitializationService.initNamespaceRoles(appId, namespaceName, operator);
     roleInitializationService.initNamespaceEnvRoles(appId, namespaceName, operator);
-
     for (NamespaceCreationModel model : models) {
       NamespaceDTO namespace = model.getNamespace();
       RequestPrecondition.checkArgumentsNotEmpty(model.getEnv(), namespace.getAppId(),
                                                  namespace.getClusterName(), namespace.getNamespaceName());
-
       try {
         namespaceService.createNamespace(Env.valueOf(model.getEnv()), namespace);
       } catch (Exception e) {
@@ -164,22 +159,23 @@ public class NamespaceController {
   public AppNamespace createAppNamespace(@PathVariable String appId,
       @RequestParam(defaultValue = "true") boolean appendNamespacePrefix,
       @RequestBody AppNamespace appNamespace) {
-
+    // 校验 AppNamespace 的 `appId` 和 `name` 非空
     RequestPrecondition.checkArgumentsNotEmpty(appNamespace.getAppId(), appNamespace.getName());
     if (!InputValidator.isValidAppNamespace(appNamespace.getName())) {
       throw new BadRequestException(String.format("Namespace格式错误: %s",
           InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE + " & "
               + InputValidator.INVALID_NAMESPACE_NAMESPACE_MESSAGE));
     }
-
+    // 保存 AppNamespace 对象到数据库
     AppNamespace createdAppNamespace = appNamespaceService.createAppNamespaceInLocal(appNamespace, appendNamespacePrefix);
-
+    // 赋予权限，若满足如下任一条件：
+    // 1. 公开类型的 AppNamespace 。
+    // 2. 私有类型的 AppNamespace ，并且允许 App 管理员创建私有类型的 AppNamespace 。
     if (portalConfig.canAppAdminCreatePrivateNamespace() || createdAppNamespace.isPublic()) {
       assignNamespaceRoleToOperator(appId, appNamespace.getName());
     }
-
+    // 发布 AppNamespaceCreationEvent 创建事件
     publisher.publishEvent(new AppNamespaceCreationEvent(createdAppNamespace));
-
     return createdAppNamespace;
   }
 

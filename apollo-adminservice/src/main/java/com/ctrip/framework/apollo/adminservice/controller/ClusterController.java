@@ -31,19 +31,17 @@ public class ClusterController {
     if (!InputValidator.isValidClusterNamespace(dto.getName())) {
       throw new BadRequestException(String.format("Cluster格式错误: %s", InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE));
     }
-
     Cluster entity = BeanUtils.transfrom(Cluster.class, dto);
+    // 校验 name 在 App 下，是否已经存在对应的 Cluster 对象
     Cluster managedEntity = clusterService.findOne(appId, entity.getName());
     if (managedEntity != null) {
       throw new BadRequestException("cluster already exist.");
     }
-
     if (autoCreatePrivateNamespace) {
       entity = clusterService.saveWithInstanceOfAppNamespaces(entity);
     } else {
       entity = clusterService.saveWithoutInstanceOfAppNamespaces(entity);
     }
-
     dto = BeanUtils.transfrom(ClusterDTO.class, entity);
     return dto;
   }

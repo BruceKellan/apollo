@@ -33,7 +33,7 @@ public class ClusterController {
   @RequestMapping(value = "apps/{appId}/envs/{env}/clusters", method = RequestMethod.POST)
   public ClusterDTO createCluster(@PathVariable String appId, @PathVariable String env,
                                   @RequestBody ClusterDTO cluster) {
-
+    // 大概写的比较匆忙，个人习惯统一
     checkModel(Objects.nonNull(cluster));
     RequestPrecondition.checkArgumentsNotEmpty(cluster.getAppId(), cluster.getName());
 

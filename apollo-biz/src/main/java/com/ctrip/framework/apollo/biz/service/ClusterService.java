@@ -60,12 +60,9 @@ public class ClusterService {
 
   @Transactional
   public Cluster saveWithInstanceOfAppNamespaces(Cluster entity) {
-
     Cluster savedCluster = saveWithoutInstanceOfAppNamespaces(entity);
-
     namespaceService.instanceOfAppNamespaces(savedCluster.getAppId(), savedCluster.getName(),
                                              savedCluster.getDataChangeCreatedBy());
-
     return savedCluster;
   }
 
@@ -74,12 +71,11 @@ public class ClusterService {
     if (!isClusterNameUnique(entity.getAppId(), entity.getName())) {
       throw new BadRequestException("cluster not unique");
     }
-    entity.setId(0);//protection
+    // protection
+    entity.setId(0);
     Cluster cluster = clusterRepository.save(entity);
-
     auditService.audit(Cluster.class.getSimpleName(), cluster.getId(), Audit.OP.INSERT,
                        cluster.getDataChangeCreatedBy());
-
     return cluster;
   }
 
