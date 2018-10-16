@@ -7,12 +7,19 @@ public class ItemDTO extends BaseDTO{
 
   private long namespaceId;
 
+  /**
+   * 对于 properties ，使用 Item 的 key ，对应每条配置项的键。
+   * 对于 yaml 等等，使用 Item 的 key = content ，对应整个配置文件。
+   */
   private String key;
 
   private String value;
 
   private String comment;
 
+  /**
+   * 行号。主要用于 properties 类型的配置文件。
+   */
   private int lineNum;
 
   public ItemDTO() {

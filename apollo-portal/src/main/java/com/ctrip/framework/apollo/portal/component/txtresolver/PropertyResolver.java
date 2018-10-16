@@ -30,9 +30,8 @@ public class PropertyResolver implements ConfigTextResolver {
     Map<Integer, ItemDTO> oldLineNumMapItem = BeanUtils.mapByKey("lineNum", baseItems);
     Map<String, ItemDTO> oldKeyMapItem = BeanUtils.mapByKey("key", baseItems);
 
-    //remove comment and blank item map.
+    // remove comment and blank item map.
     oldKeyMapItem.remove("");
-
     String[] newItems = configText.split(ITEM_SEPARATOR);
 
     if (isHasRepeatKey(newItems)) {
@@ -40,28 +39,23 @@ public class PropertyResolver implements ConfigTextResolver {
     }
 
     ItemChangeSets changeSets = new ItemChangeSets();
-    Map<Integer, String> newLineNumMapItem = new HashMap<Integer, String>();//use for delete blank and comment item
+    // use for delete blank and comment item
+    Map<Integer, String> newLineNumMapItem = new HashMap<Integer, String>();
     int lineCounter = 1;
     for (String newItem : newItems) {
       newItem = newItem.trim();
       newLineNumMapItem.put(lineCounter, newItem);
       ItemDTO oldItemByLine = oldLineNumMapItem.get(lineCounter);
-
-      //comment item
       if (isCommentItem(newItem)) {
-
+        // comment item
         handleCommentLine(namespaceId, oldItemByLine, newItem, lineCounter, changeSets);
-
-        //blank item
       } else if (isBlankItem(newItem)) {
-
+        // blank item
         handleBlankLine(namespaceId, oldItemByLine, lineCounter, changeSets);
-
-        //normal item
       } else {
+        // normal item
         handleNormalLine(namespaceId, oldKeyMapItem, newItem, lineCounter, changeSets);
       }
-
       lineCounter++;
     }
 
@@ -105,7 +99,7 @@ public class PropertyResolver implements ConfigTextResolver {
 
   private void handleCommentLine(Long namespaceId, ItemDTO oldItemByLine, String newItem, int lineCounter, ItemChangeSets changeSets) {
     String oldComment = oldItemByLine == null ? "" : oldItemByLine.getComment();
-    //create comment. implement update comment by delete old comment and create new comment
+    // create comment. implement update comment by delete old comment and create new comment
     if (!(isCommentItem(oldItemByLine) && newItem.equals(oldComment))) {
       changeSets.addCreateItem(buildCommentItem(0l, namespaceId, newItem, lineCounter));
     }
@@ -127,13 +121,15 @@ public class PropertyResolver implements ConfigTextResolver {
     }
 
     String newKey = kv[0];
-    String newValue = kv[1].replace("\\n", "\n"); //handle user input \n
+    // handle user input
+    String newValue = kv[1].replace("\\n", "\n");
 
     ItemDTO oldItem = keyMapOldItem.get(newKey);
-
-    if (oldItem == null) {//new item
+    // new item
+    if (oldItem == null) {
       changeSets.addCreateItem(buildNormalItem(0l, namespaceId, newKey, newValue, "", lineCounter));
-    } else if (!newValue.equals(oldItem.getValue()) || lineCounter != oldItem.getLineNum()) {//update item
+    // update item
+    } else if (!newValue.equals(oldItem.getValue()) || lineCounter != oldItem.getLineNum()) {
       changeSets.addUpdateItem(
           buildNormalItem(oldItem.getId(), namespaceId, newKey, newValue, oldItem.getComment(),
               lineCounter));
@@ -168,16 +164,15 @@ public class PropertyResolver implements ConfigTextResolver {
   private void deleteCommentAndBlankItem(Map<Integer, ItemDTO> oldLineNumMapItem,
                                          Map<Integer, String> newLineNumMapItem,
                                          ItemChangeSets changeSets) {
-
     for (Map.Entry<Integer, ItemDTO> entry : oldLineNumMapItem.entrySet()) {
       int lineNum = entry.getKey();
       ItemDTO oldItem = entry.getValue();
       String newItem = newLineNumMapItem.get(lineNum);
-
-      //1. old is blank by now is not
-      //2.old is comment by now is not exist or modified
-      if ((isBlankItem(oldItem) && !isBlankItem(newItem))
-          || isCommentItem(oldItem) && (newItem == null || !newItem.equals(oldItem.getComment()))) {
+      boolean toDelete = (isBlankItem(oldItem) && !isBlankItem(newItem))
+              || isCommentItem(oldItem) && (newItem == null || !newItem.equals(oldItem.getComment()));
+      // 1. old is blank by now is not
+      // 2. old is comment by now is not exist or modified
+      if (toDelete) {
         changeSets.addDeleteItem(oldItem);
       }
     }

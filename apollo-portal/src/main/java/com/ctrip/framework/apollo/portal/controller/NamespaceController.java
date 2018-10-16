@@ -154,6 +154,9 @@ public class NamespaceController {
     return BeanUtils.transfrom(AppNamespaceDTO.class, appNamespace);
   }
 
+  /**
+   * TODO 怎么做到RequestParam，RequestBody共存
+   */
   @PreAuthorize(value = "@permissionValidator.hasCreateAppNamespacePermission(#appId, #appNamespace)")
   @RequestMapping(value = "/apps/{appId}/appnamespaces", method = RequestMethod.POST)
   public AppNamespace createAppNamespace(@PathVariable String appId,
