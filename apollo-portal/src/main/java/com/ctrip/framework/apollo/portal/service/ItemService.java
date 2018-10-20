@@ -34,8 +34,10 @@ public class ItemService {
 
   @Autowired
   private UserInfoHolder userInfoHolder;
+
   @Autowired
   private AdminServiceAPI.NamespaceAPI namespaceAPI;
+
   @Autowired
   private AdminServiceAPI.ItemAPI itemAPI;
 
@@ -47,6 +49,11 @@ public class ItemService {
   @Qualifier("propertyResolver")
   private ConfigTextResolver propertyResolver;
 
+  /*
+   * TODO 这么写会不会易扩展一点？
+   */
+//  @Autowired
+//  private List<ConfigTextResolver> configTextResolvers;
 
   /**
    * parse config text and update config items
@@ -60,19 +67,14 @@ public class ItemService {
     String namespaceName = model.getNamespaceName();
     long namespaceId = model.getNamespaceId();
     String configText = model.getConfigText();
-
     ConfigTextResolver resolver =
         model.getFormat() == ConfigFileFormat.Properties ? propertyResolver : fileTextResolver;
-
-    ItemChangeSets changeSets = resolver.resolve(namespaceId, configText,
-        itemAPI.findItems(appId, env, clusterName, namespaceName));
+    ItemChangeSets changeSets = resolver.resolve(namespaceId, configText, itemAPI.findItems(appId, env, clusterName, namespaceName));
     if (changeSets.isEmpty()) {
       return;
     }
-
     changeSets.setDataChangeLastModifiedBy(userInfoHolder.getUser().getUserId());
     updateItems(appId, env, clusterName, namespaceName, changeSets);
-
     Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE_BY_TEXT,
         String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
     Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE, String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
@@ -84,13 +86,13 @@ public class ItemService {
 
 
   public ItemDTO createItem(String appId, Env env, String clusterName, String namespaceName, ItemDTO item) {
+    // 判断namespace是否存在
     NamespaceDTO namespace = namespaceAPI.loadNamespace(appId, env, clusterName, namespaceName);
     if (namespace == null) {
       throw new BadRequestException(
           "namespace:" + namespaceName + " not exist in env:" + env + ", cluster:" + clusterName);
     }
     item.setNamespaceId(namespace.getId());
-
     ItemDTO itemDTO = itemAPI.createItem(appId, env, clusterName, namespaceName, item);
     Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE, String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
     return itemDTO;

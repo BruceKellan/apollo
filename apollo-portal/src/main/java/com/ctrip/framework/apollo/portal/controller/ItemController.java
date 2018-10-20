@@ -48,12 +48,10 @@ public class ItemController {
                                 @RequestBody NamespaceTextModel model) {
 
     checkModel(model != null);
-
     model.setAppId(appId);
     model.setClusterName(clusterName);
     model.setEnv(env);
     model.setNamespaceName(namespaceName);
-
     configService.updateConfigItemByText(model);
   }
 
@@ -63,7 +61,6 @@ public class ItemController {
                             @PathVariable String clusterName, @PathVariable String namespaceName,
                             @RequestBody ItemDTO item) {
     checkModel(isValidItem(item));
-
     //protect
     item.setLineNum(0);
     item.setId(0);
@@ -72,7 +69,6 @@ public class ItemController {
     item.setDataChangeLastModifiedBy(userId);
     item.setDataChangeCreatedTime(null);
     item.setDataChangeLastModifiedTime(null);
-
     return configService.createItem(appId, Env.valueOf(env), clusterName, namespaceName, item);
   }
 
@@ -82,10 +78,8 @@ public class ItemController {
                          @PathVariable String clusterName, @PathVariable String namespaceName,
                          @RequestBody ItemDTO item) {
     checkModel(isValidItem(item));
-
     String username = userInfoHolder.getUser().getUserId();
     item.setDataChangeLastModifiedBy(username);
-
     configService.updateItem(appId, Env.valueOf(env), clusterName, namespaceName, item);
   }
 

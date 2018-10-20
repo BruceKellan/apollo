@@ -191,10 +191,10 @@ public class AdminServiceAPI {
     }
 
     public boolean isClusterUnique(String appId, Env env, String clusterName) {
+      // AppId,ClusterName联立唯一
       return restTemplate
           .get(env, "apps/{appId}/cluster/{clusterName}/unique", Boolean.class,
               appId, clusterName);
-
     }
 
     public ClusterDTO create(Env env, ClusterDTO cluster) {

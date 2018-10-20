@@ -13,18 +13,19 @@ import java.util.List;
 @Component("fileTextResolver")
 public class FileTextResolver implements ConfigTextResolver {
 
-
   @Override
   public ItemChangeSets resolve(long namespaceId, String configText, List<ItemDTO> baseItems) {
     ItemChangeSets changeSets = new ItemChangeSets();
     if (StringUtils.isEmpty(configText)) {
       return changeSets;
     }
+    // 不存在已有配置，创建 ItemDTO 到 ItemChangeSets 新增项
     if (CollectionUtils.isEmpty(baseItems)) {
       changeSets.addCreateItem(createItem(namespaceId, 0, configText));
     } else {
       ItemDTO beforeItem = baseItems.get(0);
-      if (!configText.equals(beforeItem.getValue())) {//update
+      // update
+      if (!configText.equals(beforeItem.getValue())) {
         changeSets.addUpdateItem(createItem(namespaceId, beforeItem.getId(), configText));
       }
     }

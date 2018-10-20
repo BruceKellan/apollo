@@ -14,6 +14,9 @@ import org.springframework.beans.BeanUtils;
 
 public class ConfigChangeContentBuilder {
 
+  /**
+   * Singleton
+   */
   private static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 
   private List<Item> createItems = new LinkedList<>();
@@ -48,7 +51,7 @@ public class ConfigChangeContentBuilder {
   }
 
   public String build() {
-    //因为事务第一段提交并没有更新时间,所以build时统一更新
+    // 因为事务第一段提交并没有更新时间,所以build时统一更新
     Date now = new Date();
 
     for (Item item : createItems) {

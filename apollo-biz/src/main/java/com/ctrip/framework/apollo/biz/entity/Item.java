@@ -16,6 +16,9 @@ import javax.persistence.Table;
 @Where(clause = "isDeleted = 0")
 public class Item extends BaseEntity {
 
+  /**
+   *  TODO long 类型？
+   */
   @Column(name = "NamespaceId", nullable = false)
   private long namespaceId;
 

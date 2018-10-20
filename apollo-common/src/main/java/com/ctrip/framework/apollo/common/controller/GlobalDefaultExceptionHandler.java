@@ -42,7 +42,9 @@ public class GlobalDefaultExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(GlobalDefaultExceptionHandler.class);
 
-  //处理系统内置的Exception
+  /**
+   * 处理系统内置的Exception
+   */
   @ExceptionHandler(Throwable.class)
   public ResponseEntity<Map<String, Object>> exception(HttpServletRequest request, Throwable ex) {
     return handleError(request, INTERNAL_SERVER_ERROR, ex);
@@ -66,7 +68,9 @@ public class GlobalDefaultExceptionHandler {
     return handleError(request, FORBIDDEN, ex);
   }
 
-  //处理自定义Exception
+  /**
+   * 处理自定义Exception
+   */
   @ExceptionHandler({AbstractApolloHttpException.class})
   public ResponseEntity<Map<String, Object>> badRequest(HttpServletRequest request, AbstractApolloHttpException ex) {
     return handleError(request, ex.getHttpStatus(), ex);
@@ -110,7 +114,12 @@ public class GlobalDefaultExceptionHandler {
     return new ResponseEntity<>(errorAttributes, headers, status);
   }
 
-  //打印日志, 其中logLevel为日志级别: ERROR/WARN/DEBUG/INFO/TRACE
+  /**
+   * 打印日志, 其中logLevel为日志级别: ERROR/WARN/DEBUG/INFO/TRACE
+   * @param message
+   * @param ex
+   * @param logLevel
+   */
   private void printLog(String message, Throwable ex, Level logLevel) {
     switch (logLevel) {
       case ERROR:
@@ -129,7 +138,6 @@ public class GlobalDefaultExceptionHandler {
         logger.trace(message, ex);
         break;
     }
-
     Tracer.logError(ex);
   }
 

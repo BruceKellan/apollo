@@ -155,7 +155,7 @@ public class NamespaceController {
   }
 
   /**
-   * TODO 怎么做到RequestParam，RequestBody共存
+   * 怎么做到RequestParam，RequestBody共存，请求路径中带参数?appendNamespacePrefix=true
    */
   @PreAuthorize(value = "@permissionValidator.hasCreateAppNamespacePermission(#appId, #appNamespace)")
   @RequestMapping(value = "/apps/{appId}/appnamespaces", method = RequestMethod.POST)

@@ -26,18 +26,14 @@ public class PropertyResolver implements ConfigTextResolver {
 
   @Override
   public ItemChangeSets resolve(long namespaceId, String configText, List<ItemDTO> baseItems) {
-
     Map<Integer, ItemDTO> oldLineNumMapItem = BeanUtils.mapByKey("lineNum", baseItems);
     Map<String, ItemDTO> oldKeyMapItem = BeanUtils.mapByKey("key", baseItems);
-
     // remove comment and blank item map.
     oldKeyMapItem.remove("");
     String[] newItems = configText.split(ITEM_SEPARATOR);
-
     if (isHasRepeatKey(newItems)) {
       throw new BadRequestException("config text has repeat key please check.");
     }
-
     ItemChangeSets changeSets = new ItemChangeSets();
     // use for delete blank and comment item
     Map<Integer, String> newLineNumMapItem = new HashMap<Integer, String>();
@@ -58,10 +54,8 @@ public class PropertyResolver implements ConfigTextResolver {
       }
       lineCounter++;
     }
-
     deleteCommentAndBlankItem(oldLineNumMapItem, newLineNumMapItem, changeSets);
     deleteNormalKVItem(oldKeyMapItem, changeSets);
-
     return changeSets;
   }
 
@@ -90,7 +84,6 @@ public class PropertyResolver implements ConfigTextResolver {
     if (kvSeparator == -1) {
       return null;
     }
-
     String[] kv = new String[2];
     kv[0] = item.substring(0, kvSeparator).trim();
     kv[1] = item.substring(kvSeparator + 1, item.length()).trim();
@@ -113,17 +106,13 @@ public class PropertyResolver implements ConfigTextResolver {
 
   private void handleNormalLine(Long namespaceId, Map<String, ItemDTO> keyMapOldItem, String newItem,
                                 int lineCounter, ItemChangeSets changeSets) {
-
     String[] kv = parseKeyValueFromItem(newItem);
-
     if (kv == null) {
       throw new BadRequestException("line:" + lineCounter + " key value must separate by '='");
     }
-
     String newKey = kv[0];
     // handle user input
     String newValue = kv[1].replace("\\n", "\n");
-
     ItemDTO oldItem = keyMapOldItem.get(newKey);
     // new item
     if (oldItem == null) {

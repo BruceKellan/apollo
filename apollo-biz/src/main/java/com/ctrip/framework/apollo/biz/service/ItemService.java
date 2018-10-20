@@ -42,11 +42,9 @@ public class ItemService {
     if (item == null) {
       throw new IllegalArgumentException("item not exist. ID:" + id);
     }
-
     item.setDeleted(true);
     item.setDataChangeLastModifiedBy(operator);
     Item deletedItem = itemRepository.save(item);
-
     auditService.audit(Item.class.getSimpleName(), id, Audit.OP.DELETE, operator);
     return deletedItem;
   }

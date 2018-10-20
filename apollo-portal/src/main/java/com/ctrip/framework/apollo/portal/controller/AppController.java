@@ -92,7 +92,6 @@ public class AppController {
           .assignRoleToUsers(RoleUtils.buildAppMasterRoleName(createdApp.getAppId()),
               admins, userInfoHolder.getUser().getUserId());
     }
-
     return createdApp;
   }
 

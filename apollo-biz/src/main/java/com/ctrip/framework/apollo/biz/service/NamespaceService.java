@@ -323,9 +323,7 @@ public class NamespaceService {
 
   @Transactional
   public void instanceOfAppNamespaces(String appId, String clusterName, String createBy) {
-
     List<AppNamespace> appNamespaces = appNamespaceService.findByAppId(appId);
-
     for (AppNamespace appNamespace : appNamespaces) {
       Namespace ns = new Namespace();
       ns.setAppId(appId);
@@ -336,7 +334,6 @@ public class NamespaceService {
       namespaceRepository.save(ns);
       auditService.audit(Namespace.class.getSimpleName(), ns.getId(), Audit.OP.INSERT, createBy);
     }
-
   }
 
   public Map<String, Boolean> namespacePublishInfo(String appId) {

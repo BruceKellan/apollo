@@ -38,6 +38,7 @@ public class ClusterController {
       throw new BadRequestException("cluster already exist.");
     }
     if (autoCreatePrivateNamespace) {
+      // 先创建这个集群，然后查找该Appid关联的所有的AppNameSpace，为这个集群创建对应的namespace
       entity = clusterService.saveWithInstanceOfAppNamespaces(entity);
     } else {
       entity = clusterService.saveWithoutInstanceOfAppNamespaces(entity);

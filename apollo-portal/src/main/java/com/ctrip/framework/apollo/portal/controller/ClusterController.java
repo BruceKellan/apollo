@@ -26,6 +26,7 @@ public class ClusterController {
 
   @Autowired
   private ClusterService clusterService;
+
   @Autowired
   private UserInfoHolder userInfoHolder;
 
@@ -36,15 +37,14 @@ public class ClusterController {
     // 大概写的比较匆忙，个人习惯统一
     checkModel(Objects.nonNull(cluster));
     RequestPrecondition.checkArgumentsNotEmpty(cluster.getAppId(), cluster.getName());
-
+    // 集中输入校验规则
     if (!InputValidator.isValidClusterNamespace(cluster.getName())) {
       throw new BadRequestException(String.format("Cluster格式错误: %s", InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE));
     }
-
+    // userInfo用户信息载体对象
     String operator = userInfoHolder.getUser().getUserId();
     cluster.setDataChangeLastModifiedBy(operator);
     cluster.setDataChangeCreatedBy(operator);
-
     return clusterService.createCluster(Env.valueOf(env), cluster);
   }
 
