@@ -148,19 +148,14 @@ public class ReleaseService {
   @Transactional
   public Release publish(Namespace namespace, String releaseName, String releaseComment,
                          String operator, boolean isEmergencyPublish) {
-
     checkLock(namespace, isEmergencyPublish, operator);
-
     Map<String, String> operateNamespaceItems = getNamespaceItems(namespace);
-
     Namespace parentNamespace = namespaceService.findParentNamespace(namespace);
-
-    //branch release
+    // branch release
     if (parentNamespace != null) {
       return publishBranchNamespace(parentNamespace, namespace, operateNamespaceItems,
                                     releaseName, releaseComment, operator, isEmergencyPublish);
     }
-
     Namespace childNamespace = namespaceService.findChildNamespace(namespace);
 
     Release previousRelease = null;

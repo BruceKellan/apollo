@@ -38,6 +38,7 @@ public class ReleaseService {
 
   @Autowired
   private UserInfoHolder userInfoHolder;
+
   @Autowired
   private AdminServiceAPI.ReleaseAPI releaseAPI;
 
@@ -49,14 +50,11 @@ public class ReleaseService {
     String namespaceName = model.getNamespaceName();
     String releaseBy = StringUtils.isEmpty(model.getReleasedBy()) ?
                        userInfoHolder.getUser().getUserId() : model.getReleasedBy();
-
     ReleaseDTO releaseDTO = releaseAPI.createRelease(appId, env, clusterName, namespaceName,
                                                      model.getReleaseTitle(), model.getReleaseComment(),
                                                      releaseBy, isEmergencyPublish);
-
     Tracer.logEvent(TracerEventType.RELEASE_NAMESPACE,
                     String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
-
     return releaseDTO;
   }
 

@@ -44,38 +44,42 @@ public class NamespaceUnlockAspect {
 
   @Autowired
   private NamespaceLockService namespaceLockService;
+
   @Autowired
   private NamespaceService namespaceService;
+
   @Autowired
   private ItemService itemService;
+
   @Autowired
   private ReleaseService releaseService;
+
   @Autowired
   private BizConfig bizConfig;
 
 
-  //create item
+  // create item
   @After("@annotation(PreAcquireNamespaceLock) && args(appId, clusterName, namespaceName, item, ..)")
   public void requireLockAdvice(String appId, String clusterName, String namespaceName,
                                 ItemDTO item) {
     tryUnlock(namespaceService.findOne(appId, clusterName, namespaceName));
   }
 
-  //update item
+  // update item
   @After("@annotation(PreAcquireNamespaceLock) && args(appId, clusterName, namespaceName, itemId, item, ..)")
   public void requireLockAdvice(String appId, String clusterName, String namespaceName, long itemId,
                                 ItemDTO item) {
     tryUnlock(namespaceService.findOne(appId, clusterName, namespaceName));
   }
 
-  //update by change set
+  // update by change set
   @After("@annotation(PreAcquireNamespaceLock) && args(appId, clusterName, namespaceName, changeSet, ..)")
   public void requireLockAdvice(String appId, String clusterName, String namespaceName,
                                 ItemChangeSets changeSet) {
     tryUnlock(namespaceService.findOne(appId, clusterName, namespaceName));
   }
 
-  //delete item
+  // delete item
   @After("@annotation(PreAcquireNamespaceLock) && args(itemId, operator, ..)")
   public void requireLockAdvice(long itemId, String operator) {
     Item item = itemService.findOne(itemId);
@@ -89,11 +93,10 @@ public class NamespaceUnlockAspect {
     if (bizConfig.isNamespaceLockSwitchOff()) {
       return;
     }
-
+    // 若当前 Namespace 的配置恢复原有状态，释放锁，即删除 NamespaceLock
     if (!isModified(namespace)) {
       namespaceLockService.unlock(namespace.getId());
     }
-
   }
 
   boolean isModified(Namespace namespace) {
@@ -103,14 +106,12 @@ public class NamespaceUnlockAspect {
     if (release == null) {
       return hasNormalItems(items);
     }
-
+    // 获得 Release 的配置 Map
     Map<String, String> releasedConfiguration = gson.fromJson(release.getConfigurations(), GsonType.CONFIG);
+    // 获得 当前配置 Map
     Map<String, String> configurationFromItems = generateConfigurationFromItems(namespace, items);
-
     MapDifference<String, String> difference = Maps.difference(releasedConfiguration, configurationFromItems);
-
     return !difference.areEqual();
-
   }
 
   private boolean hasNormalItems(List<Item> items) {

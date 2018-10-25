@@ -76,7 +76,6 @@ public class ReleaseController {
     return BeanUtils.batchTransform(ReleaseDTO.class, releases);
   }
 
-
   @RequestMapping(value = "/apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName}/releases/active", method = RequestMethod.GET)
   public List<ReleaseDTO> findActiveReleases(@PathVariable("appId") String appId,
                                              @PathVariable("clusterName") String clusterName,
@@ -109,8 +108,7 @@ public class ReleaseController {
                                                 clusterName, namespaceName));
     }
     Release release = releaseService.publish(namespace, releaseName, releaseComment, operator, isEmergencyPublish);
-
-    //send release message
+    // send release message
     Namespace parentNamespace = namespaceService.findParentNamespace(namespace);
     String messageCluster;
     if (parentNamespace != null) {
