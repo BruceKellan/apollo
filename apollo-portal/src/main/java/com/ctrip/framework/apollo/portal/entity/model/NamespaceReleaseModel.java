@@ -4,6 +4,9 @@ package com.ctrip.framework.apollo.portal.entity.model;
 import com.ctrip.framework.apollo.core.enums.Env;
 import com.ctrip.framework.apollo.core.utils.StringUtils;
 
+/**
+ * Namespace 配置发布Model
+ */
 public class NamespaceReleaseModel implements Verifiable {
 
   private String appId;
@@ -13,6 +16,11 @@ public class NamespaceReleaseModel implements Verifiable {
   private String releaseTitle;
   private String releaseComment;
   private String releasedBy;
+
+  /**
+   * 紧急发布功能，可通过设置 PortalDB 的 ServerConfig 的"emergencyPublish.supported.envs" 配置开启对应的 Env 们。
+   * 例如，emergencyPublish.supported.envs = dev
+   */
   private boolean isEmergencyPublish;
 
   @Override

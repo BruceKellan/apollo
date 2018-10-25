@@ -97,15 +97,13 @@ public class PortalConfig extends RefreshableConfig {
 
   public boolean isEmergencyPublishAllowed(Env env) {
     String targetEnv = env.name();
-
+    // 使用DB Table存储配置，键值是写死在代码中的
     String[] emergencyPublishSupportedEnvs = getArrayProperty("emergencyPublish.supported.envs", new String[0]);
-
     for (String supportedEnv : emergencyPublishSupportedEnvs) {
       if (Objects.equals(targetEnv, supportedEnv.toUpperCase().trim())) {
         return true;
       }
     }
-
     return false;
   }
 

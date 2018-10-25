@@ -20,6 +20,11 @@ public class ReleaseHistory extends BaseEntity {
   @Column(name = "AppId", nullable = false)
   private String appId;
 
+  /**
+   * Branch 名
+   * 主干，使用 Cluster 名字
+   * 分支，使用子 Cluster 名字
+   */
   @Column(name = "ClusterName", nullable = false)
   private String clusterName;
 
@@ -35,6 +40,9 @@ public class ReleaseHistory extends BaseEntity {
   @Column(name = "PreviousReleaseId")
   private long previousReleaseId;
 
+  /**
+   * 操作类型 {@link com.ctrip.framework.apollo.common.constants.ReleaseOperation}
+   */
   @Column(name = "Operation")
   private int operation;
 

@@ -46,19 +46,17 @@ public class ReleaseController {
   public ReleaseDTO createRelease(@PathVariable String appId,
                                   @PathVariable String env, @PathVariable String clusterName,
                                   @PathVariable String namespaceName, @RequestBody NamespaceReleaseModel model) {
-
     checkModel(Objects.nonNull(model));
     model.setAppId(appId);
     model.setEnv(env);
     model.setClusterName(clusterName);
     model.setNamespaceName(namespaceName);
-
+    // 若是紧急发布，但是当前环境未允许该操作，抛出 BadRequestException 异常
     if (model.isEmergencyPublish() && !portalConfig.isEmergencyPublishAllowed(Env.valueOf(env))) {
       throw new BadRequestException(String.format("Env: %s is not supported emergency publish now", env));
     }
-
+    // 发布配置
     ReleaseDTO createdRelease = releaseService.publish(model);
-
     ConfigPublishEvent event = ConfigPublishEvent.instance();
     event.withAppId(appId)
         .withCluster(clusterName)
@@ -66,9 +64,7 @@ public class ReleaseController {
         .withReleaseId(createdRelease.getId())
         .setNormalPublishEvent(true)
         .setEnv(Env.valueOf(env));
-
     publisher.publishEvent(event);
-
     return createdRelease;
   }
 

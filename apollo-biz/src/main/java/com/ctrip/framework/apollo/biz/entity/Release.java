@@ -18,6 +18,9 @@ import javax.persistence.Table;
 @SQLDelete(sql = "Update Release set isDeleted = 1 where id = ?")
 @Where(clause = "isDeleted = 0")
 public class Release extends BaseEntity {
+  /**
+   * TODO 用途?
+   */
   @Column(name = "ReleaseKey", nullable = false)
   private String releaseKey;
 
@@ -40,6 +43,9 @@ public class Release extends BaseEntity {
   @Column(name = "Comment", nullable = false)
   private String comment;
 
+  /**
+   * 是否遗弃
+   */
   @Column(name = "IsAbandoned", columnDefinition = "Bit default '0'")
   private boolean isAbandoned;
 

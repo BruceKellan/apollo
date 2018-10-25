@@ -25,6 +25,7 @@ public abstract class RefreshableConfig {
   private static final Logger logger = LoggerFactory.getLogger(RefreshableConfig.class);
 
   private static final String LIST_SEPARATOR = ",";
+
   //TimeUnit: second
   private static final int CONFIG_REFRESH_INTERVAL = 60;
 
@@ -43,23 +44,21 @@ public abstract class RefreshableConfig {
 
   @PostConstruct
   public void setup() {
-
     propertySources = getRefreshablePropertySources();
     if (CollectionUtils.isEmpty(propertySources)) {
       throw new IllegalStateException("Property sources can not be empty.");
     }
-
-    //add property source to environment
+    // add property source to environment
     for (RefreshablePropertySource propertySource : propertySources) {
+      // 刷新配置源，并添加到上下文中
       propertySource.refresh();
       environment.getPropertySources().addLast(propertySource);
     }
-
-    //task to update configs
+    // task to update configs
     ScheduledExecutorService
         executorService =
         Executors.newScheduledThreadPool(1, ApolloThreadFactory.create("ConfigRefresher", true));
-
+    // 跑定时任务60s刷新一次配置，热加载配置
     executorService
         .scheduleWithFixedDelay(() -> {
           try {
