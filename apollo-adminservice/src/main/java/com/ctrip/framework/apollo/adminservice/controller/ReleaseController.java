@@ -102,16 +102,19 @@ public class ReleaseController {
                             @RequestParam(name = "comment", required = false) String releaseComment,
                             @RequestParam("operator") String operator,
                             @RequestParam(name = "isEmergencyPublish", defaultValue = "false") boolean isEmergencyPublish) {
+    // 校验是否存在
     Namespace namespace = namespaceService.findOne(appId, clusterName, namespaceName);
     if (namespace == null) {
       throw new NotFoundException(String.format("Could not find namespace for %s %s %s", appId,
                                                 clusterName, namespaceName));
     }
+    // 发布配置
     Release release = releaseService.publish(namespace, releaseName, releaseComment, operator, isEmergencyPublish);
     // send release message
     Namespace parentNamespace = namespaceService.findParentNamespace(namespace);
     String messageCluster;
     if (parentNamespace != null) {
+      // TODO 灰度发布
       messageCluster = parentNamespace.getClusterName();
     } else {
       messageCluster = clusterName;

@@ -75,19 +75,15 @@ public class ReleaseController {
                                       @PathVariable String env, @PathVariable String clusterName,
                                       @PathVariable String namespaceName, @PathVariable String branchName,
                                       @RequestBody NamespaceReleaseModel model) {
-
     checkModel(Objects.nonNull(model));
     model.setAppId(appId);
     model.setEnv(env);
     model.setClusterName(branchName);
     model.setNamespaceName(namespaceName);
-
     if (model.isEmergencyPublish() && !portalConfig.isEmergencyPublishAllowed(Env.valueOf(env))) {
       throw new BadRequestException(String.format("Env: %s is not supported emergency publish now", env));
     }
-
     ReleaseDTO createdRelease = releaseService.publish(model);
-
     ConfigPublishEvent event = ConfigPublishEvent.instance();
     event.withAppId(appId)
         .withCluster(clusterName)
@@ -95,9 +91,7 @@ public class ReleaseController {
         .withReleaseId(createdRelease.getId())
         .setGrayPublishEvent(true)
         .setEnv(Env.valueOf(env));
-
     publisher.publishEvent(event);
-
     return createdRelease;
   }
 

@@ -12,6 +12,7 @@ import org.springframework.data.repository.PagingAndSortingRepository;
  * @author Jason Song(song_s@ctrip.com)
  */
 public interface ReleaseHistoryRepository extends PagingAndSortingRepository<ReleaseHistory, Long> {
+
   Page<ReleaseHistory> findByAppIdAndClusterNameAndNamespaceNameOrderByIdDesc(String appId, String
       clusterName, String namespaceName, Pageable pageable);
 

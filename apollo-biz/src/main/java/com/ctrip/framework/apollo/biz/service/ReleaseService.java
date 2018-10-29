@@ -145,38 +145,38 @@ public class ReleaseService {
 
   }
 
+
   @Transactional
   public Release publish(Namespace namespace, String releaseName, String releaseComment,
                          String operator, boolean isEmergencyPublish) {
+    // 校验锁定
     checkLock(namespace, isEmergencyPublish, operator);
+    // 获得 Namespace 的 配置 Map
     Map<String, String> operateNamespaceItems = getNamespaceItems(namespace);
     Namespace parentNamespace = namespaceService.findParentNamespace(namespace);
+    // 若有父 Namespace ，则是子 Namespace ，进行灰度发布
+    // 创建的 Namespace ，默认就是主干，而灰度发布使用的是分支
     // branch release
     if (parentNamespace != null) {
       return publishBranchNamespace(parentNamespace, namespace, operateNamespaceItems,
                                     releaseName, releaseComment, operator, isEmergencyPublish);
     }
     Namespace childNamespace = namespaceService.findChildNamespace(namespace);
-
     Release previousRelease = null;
     if (childNamespace != null) {
       previousRelease = findLatestActiveRelease(namespace);
     }
-
     //master release
     Map<String, Object> operationContext = Maps.newHashMap();
     operationContext.put(ReleaseOperationContext.IS_EMERGENCY_PUBLISH, isEmergencyPublish);
-
     Release release = masterRelease(namespace, releaseName, releaseComment, operateNamespaceItems,
                                     operator, ReleaseOperation.NORMAL_RELEASE, operationContext);
-
     //merge to branch and auto release
     if (childNamespace != null) {
       mergeFromMasterAndPublishBranch(namespace, childNamespace, operateNamespaceItems,
                                       releaseName, releaseComment, operator, previousRelease,
                                       release, isEmergencyPublish);
     }
-
     return release;
   }
 
@@ -194,23 +194,21 @@ public class ReleaseService {
                                                String releaseName, String releaseComment,
                                                String operator, Release masterPreviousRelease,
                                                Release parentRelease, boolean isEmergencyPublish) {
-    //create release for child namespace
+    // create release for child namespace
     Map<String, String> childReleaseConfiguration = getNamespaceReleaseConfiguration(childNamespace);
     Map<String, String> parentNamespaceOldConfiguration = masterPreviousRelease == null ?
                                                           null : gson.fromJson(masterPreviousRelease.getConfigurations(),
                                                                         GsonType.CONFIG);
-
     Map<String, String> childNamespaceToPublishConfigs =
         calculateChildNamespaceToPublishConfiguration(parentNamespaceOldConfiguration,
                                                       parentNamespaceItems,
                                                       childNamespace);
-    //compare
+    // compare
     if (!childNamespaceToPublishConfigs.equals(childReleaseConfiguration)) {
       branchRelease(parentNamespace, childNamespace, releaseName, releaseComment,
                     childNamespaceToPublishConfigs, parentRelease.getId(), operator,
                     ReleaseOperation.MASTER_NORMAL_RELEASE_MERGE_TO_GRAY, isEmergencyPublish);
     }
-
   }
 
   private Release publishBranchNamespace(Namespace parentNamespace, Namespace childNamespace,
@@ -236,14 +234,13 @@ public class ReleaseService {
                                 int releaseOperation, Map<String, Object> operationContext) {
     Release lastActiveRelease = findLatestActiveRelease(namespace);
     long previousReleaseId = lastActiveRelease == null ? 0 : lastActiveRelease.getId();
+    // 创建 Release 对象，并保存
     Release release = createRelease(namespace, releaseName, releaseComment,
                                     configurations, operator);
-
     releaseHistoryService.createReleaseHistory(namespace.getAppId(), namespace.getClusterName(),
                                                namespace.getNamespaceName(), namespace.getClusterName(),
                                                release.getId(), previousReleaseId, releaseOperation,
                                                operationContext, operator);
-
     return release;
   }
 
@@ -299,7 +296,6 @@ public class ReleaseService {
     return result;
   }
 
-
   private Map<String, String> getNamespaceItems(Namespace namespace) {
     List<Item> items = itemService.findItemsWithoutOrdered(namespace.getId());
     Map<String, String> configurations = new HashMap<String, String>();
@@ -309,7 +305,6 @@ public class ReleaseService {
       }
       configurations.put(item.getKey(), item.getValue());
     }
-
     return configurations;
   }
 
@@ -336,11 +331,9 @@ public class ReleaseService {
     release.setNamespaceName(namespace.getNamespaceName());
     release.setConfigurations(gson.toJson(configurations));
     release = releaseRepository.save(release);
-
     namespaceLockService.unlock(namespace.getId());
     auditService.audit(Release.class.getSimpleName(), release.getId(), Audit.OP.INSERT,
                        release.getDataChangeCreatedBy());
-
     return release;
   }
 

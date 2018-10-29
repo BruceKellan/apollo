@@ -216,13 +216,11 @@ public class NamespaceService {
   public Namespace findParentNamespace(Namespace namespace) {
     String appId = namespace.getAppId();
     String namespaceName = namespace.getNamespaceName();
-
     Cluster cluster = clusterService.findOne(appId, namespace.getClusterName());
     if (cluster != null && cluster.getParentClusterId() > 0) {
       Cluster parentCluster = clusterService.findOne(cluster.getParentClusterId());
       return findOne(appId, parentCluster.getName(), namespaceName);
     }
-
     return null;
   }
 
