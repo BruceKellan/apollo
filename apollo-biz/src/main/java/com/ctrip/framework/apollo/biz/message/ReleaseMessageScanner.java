@@ -21,6 +21,10 @@ import com.google.common.collect.Lists;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
+ * InitializingBean 用于初始化bean，与Init-method的区别在于：
+ * 1. InitializingBean 与Spring耦合比较严重
+ * 2. Init-method 反射实现，效率比较低
+ * 可同时存在，调用时机 afterPropertiesSet >> init-method
  */
 public class ReleaseMessageScanner implements InitializingBean {
   private static final Logger logger = LoggerFactory.getLogger(ReleaseMessageScanner.class);
@@ -28,9 +32,21 @@ public class ReleaseMessageScanner implements InitializingBean {
   private BizConfig bizConfig;
   @Autowired
   private ReleaseMessageRepository releaseMessageRepository;
+  /**
+   * 从 DB 中扫描 ReleaseMessage 表的频率，单位：毫秒
+   */
   private int databaseScanInterval;
+  /**
+   * 监听器数组
+   */
   private List<ReleaseMessageListener> listeners;
+  /**
+   * 定时任务服务
+   */
   private ScheduledExecutorService executorService;
+  /**
+   * 最后扫描到的 ReleaseMessage 的编号
+   */
   private long maxIdScanned;
 
   public ReleaseMessageScanner() {
@@ -55,7 +71,6 @@ public class ReleaseMessageScanner implements InitializingBean {
         transaction.complete();
       }
     }, databaseScanInterval, databaseScanInterval, TimeUnit.MILLISECONDS);
-
   }
 
   /**
@@ -84,7 +99,7 @@ public class ReleaseMessageScanner implements InitializingBean {
    * @return whether there are more messages
    */
   private boolean scanAndSendMessages() {
-    //current batch is 500
+    // current batch is 500
     List<ReleaseMessage> releaseMessages =
         releaseMessageRepository.findFirst500ByIdGreaterThanOrderByIdAsc(maxIdScanned);
     if (CollectionUtils.isEmpty(releaseMessages)) {

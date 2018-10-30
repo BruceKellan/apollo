@@ -39,6 +39,10 @@ public class BizConfig extends RefreshableConfig {
   @Autowired
   private BizDBPropertySource propertySource;
 
+  /**
+   * 加载配置
+   * @return
+   */
   @Override
   protected List<RefreshablePropertySource> getRefreshablePropertySources() {
     return Collections.singletonList(propertySource);

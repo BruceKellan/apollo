@@ -236,15 +236,13 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
   @Override
   public void handleMessage(ReleaseMessage message, String channel) {
     logger.info("message received - channel: {}, message: {}", channel, message);
-
     String content = message.getMessage();
     Tracer.logEvent("Apollo.LongPoll.Messages", content);
+    // 写的比较死-
     if (!Topics.APOLLO_RELEASE_TOPIC.equals(channel) || Strings.isNullOrEmpty(content)) {
       return;
     }
-
     String changedNamespace = retrieveNamespaceFromReleaseMessage.apply(content);
-
     if (Strings.isNullOrEmpty(changedNamespace)) {
       logger.error("message format invalid - {}", content);
       return;
@@ -253,14 +251,12 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     if (!deferredResults.containsKey(content)) {
       return;
     }
-
-    //create a new list to avoid ConcurrentModificationException
+    // create a new list to avoid ConcurrentModificationException
     List<DeferredResultWrapper> results = Lists.newArrayList(deferredResults.get(content));
-
     ApolloConfigNotification configNotification = new ApolloConfigNotification(changedNamespace, message.getId());
     configNotification.addMessage(content, message.getId());
 
-    //do async notification if too many clients
+    // do async notification if too many clients
     if (results.size() > bizConfig.releaseMessageNotificationBatch()) {
       largeNotificationBatchExecutorService.submit(() -> {
         logger.debug("Async notify {} clients for key {} with batch {}", results.size(), content,

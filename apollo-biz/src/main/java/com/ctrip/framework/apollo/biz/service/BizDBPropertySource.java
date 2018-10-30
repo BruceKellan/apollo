@@ -43,24 +43,21 @@ public class BizDBPropertySource extends RefreshablePropertySource {
   @Override
   protected void refresh() {
     Iterable<ServerConfig> dbConfigs = serverConfigRepository.findAll();
-
     Map<String, Object> newConfigs = Maps.newHashMap();
-    //default cluster's configs
+    // default cluster's configs
     for (ServerConfig config : dbConfigs) {
       if (Objects.equals(ConfigConsts.CLUSTER_NAME_DEFAULT, config.getCluster())) {
         newConfigs.put(config.getKey(), config.getValue());
       }
     }
-
-    //data center's configs
+    // data center's configs
     String dataCenter = getCurrentDataCenter();
     for (ServerConfig config : dbConfigs) {
       if (Objects.equals(dataCenter, config.getCluster())) {
         newConfigs.put(config.getKey(), config.getValue());
       }
     }
-
-    //cluster's config
+    // cluster's config
     if (!Strings.isNullOrEmpty(System.getProperty(ConfigConsts.APOLLO_CLUSTER_KEY))) {
       String cluster = System.getProperty(ConfigConsts.APOLLO_CLUSTER_KEY);
       for (ServerConfig config : dbConfigs) {
@@ -69,8 +66,7 @@ public class BizDBPropertySource extends RefreshablePropertySource {
         }
       }
     }
-
-    //put to environment
+    // put to environment
     for (Map.Entry<String, Object> config: newConfigs.entrySet()){
       String key = config.getKey();
       Object value = config.getValue();
@@ -81,11 +77,8 @@ public class BizDBPropertySource extends RefreshablePropertySource {
         logger.info("Load config from DB : {} = {}. Old value = {}", key,
                     value, this.source.get(key));
       }
-
       this.source.put(key, value);
-
     }
-
   }
 
 }
