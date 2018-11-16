@@ -54,16 +54,43 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/notifications/v2")
 public class NotificationControllerV2 implements ReleaseMessageListener {
+
   private static final Logger logger = LoggerFactory.getLogger(NotificationControllerV2.class);
+  /**
+   * Key：Watch Key
+   * Value：DeferredResultWrapper 数组
+   */
   private final Multimap<String, DeferredResultWrapper> deferredResults =
       Multimaps.synchronizedSetMultimap(HashMultimap.create());
+
   private static final Splitter STRING_SPLITTER =
       Splitter.on(ConfigConsts.CLUSTER_NAMESPACE_SEPARATOR).omitEmptyStrings();
+
   private static final Type notificationsTypeReference =
       new TypeToken<List<ApolloConfigNotification>>() {
       }.getType();
 
+  /**
+   * 大量通知分批执行 ExecutorService
+   */
   private final ExecutorService largeNotificationBatchExecutorService;
+
+  /**
+   * 通过 ReleaseMessage 的消息内容，获得对应 Namespace 的名字
+   */
+  private static final Function<String, String> retrieveNamespaceFromReleaseMessage =
+          releaseMessage -> {
+            if (Strings.isNullOrEmpty(releaseMessage)) {
+              return null;
+            }
+            List<String> keys = STRING_SPLITTER.splitToList(releaseMessage);
+            //message should be appId+cluster+namespace
+            if (keys.size() != 3) {
+              logger.error("message format invalid - {}", releaseMessage);
+              return null;
+            }
+            return keys.get(2);
+          };
 
   @Autowired
   private WatchKeysUtil watchKeysUtil;
@@ -95,24 +122,25 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
       @RequestParam(value = "notifications") String notificationsAsString,
       @RequestParam(value = "dataCenter", required = false) String dataCenter,
       @RequestParam(value = "ip", required = false) String clientIp) {
+    // parse notificationsAsString Json to List
     List<ApolloConfigNotification> notifications = null;
-
     try {
       notifications =
           gson.fromJson(notificationsAsString, notificationsTypeReference);
     } catch (Throwable ex) {
       Tracer.logError(ex);
     }
-
     if (CollectionUtils.isEmpty(notifications)) {
       throw new BadRequestException("Invalid format of notifications: " + notificationsAsString);
     }
-
     DeferredResultWrapper deferredResultWrapper = new DeferredResultWrapper();
+    // Namespace 集合
     Set<String> namespaces = Sets.newHashSet();
+    // 客户端的通知 Map , key 为 Namespace 名，value 为通知编号。
     Map<String, Long> clientSideNotifications = Maps.newHashMap();
+    // 过滤并创建 ApolloConfigNotification Map
     Map<String, ApolloConfigNotification> filteredNotifications = filterNotifications(appId, notifications);
-
+    // 循环 ApolloConfigNotification Map ，初始化上述变量。
     for (Map.Entry<String, ApolloConfigNotification> notificationEntry : filteredNotifications.entrySet()) {
       String normalizedNamespace = notificationEntry.getKey();
       ApolloConfigNotification notification = notificationEntry.getValue();
@@ -122,55 +150,51 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
         deferredResultWrapper.recordNamespaceNameNormalizedResult(notification.getNamespaceName(), normalizedNamespace);
       }
     }
-
     if (CollectionUtils.isEmpty(namespaces)) {
       throw new BadRequestException("Invalid format of notifications: " + notificationsAsString);
     }
-
+    // 组装 Watch Key Multimap
     Multimap<String, String> watchedKeysMap =
         watchKeysUtil.assembleAllWatchKeys(appId, cluster, namespaces, dataCenter);
-
+    // 生成 Watch Key 集合
     Set<String> watchedKeys = Sets.newHashSet(watchedKeysMap.values());
-
+    // 获得 Watch Key 集合中，每个 Watch Key 对应的 ReleaseMessage 记录。
     List<ReleaseMessage> latestReleaseMessages =
         releaseMessageService.findLatestReleaseMessagesGroupByMessages(watchedKeys);
-
     /**
      * Manually close the entity manager.
      * Since for async request, Spring won't do so until the request is finished,
      * which is unacceptable since we are doing long polling - means the db connection would be hold
      * for a very long time
      */
+    // 手动关闭 EntityManager
+    // 因为对于 async 请求，Spring 在请求完成之前不会这样做
+    // 这是不可接受的，因为我们正在做长轮询——意味着 db 连接将被保留很长时间。
+    // 实际上，下面的过程，我们已经不需要 db 连接，因此进行关闭。
     entityManagerUtil.closeEntityManager();
-
     List<ApolloConfigNotification> newNotifications =
         getApolloConfigNotifications(namespaces, clientSideNotifications, watchedKeysMap,
             latestReleaseMessages);
-
     if (!CollectionUtils.isEmpty(newNotifications)) {
       deferredResultWrapper.setResult(newNotifications);
     } else {
       deferredResultWrapper
           .onTimeout(() -> logWatchedKeys(watchedKeys, "Apollo.LongPoll.TimeOutKeys"));
-
       deferredResultWrapper.onCompletion(() -> {
-        //unregister all keys
+        // unregister all keys
         for (String key : watchedKeys) {
           deferredResults.remove(key, deferredResultWrapper);
         }
         logWatchedKeys(watchedKeys, "Apollo.LongPoll.CompletedKeys");
       });
-
-      //register all keys
+      // register all keys
       for (String key : watchedKeys) {
         this.deferredResults.put(key, deferredResultWrapper);
       }
-
       logWatchedKeys(watchedKeys, "Apollo.LongPoll.RegisteredKeys");
       logger.debug("Listening {} from appId: {}, cluster: {}, namespace: {}, datacenter: {}",
           watchedKeys, appId, cluster, namespaces, dataCenter);
     }
-
     return deferredResultWrapper.getResult();
   }
 
@@ -186,7 +210,6 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
       notification.setNamespaceName(originalNamespace);
       //fix the character case issue, such as FX.apollo <-> fx.apollo
       String normalizedNamespace = namespaceUtil.normalizeNamespace(appId, originalNamespace);
-
       // in case client side namespace name has character case issue and has difference notification ids
       // such as FX.apollo = 1 but fx.apollo = 2, we should let FX.apollo have the chance to update its notification id
       // which means we should record FX.apollo = 1 here and ignore fx.apollo = 2
@@ -194,7 +217,6 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
           filteredNotifications.get(normalizedNamespace).getNotificationId() < notification.getNotificationId()) {
         continue;
       }
-
       filteredNotifications.put(normalizedNamespace, notification);
     }
     return filteredNotifications;
@@ -247,7 +269,6 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
       logger.error("message format invalid - {}", content);
       return;
     }
-
     if (!deferredResults.containsKey(content)) {
       return;
     }
@@ -255,7 +276,6 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
     List<DeferredResultWrapper> results = Lists.newArrayList(deferredResults.get(content));
     ApolloConfigNotification configNotification = new ApolloConfigNotification(changedNamespace, message.getId());
     configNotification.addMessage(content, message.getId());
-
     // do async notification if too many clients
     if (results.size() > bizConfig.releaseMessageNotificationBatch()) {
       largeNotificationBatchExecutorService.submit(() -> {
@@ -275,28 +295,12 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
       });
       return;
     }
-
     logger.debug("Notify {} clients for key {}", results.size(), content);
-
     for (DeferredResultWrapper result : results) {
       result.setResult(configNotification);
     }
     logger.debug("Notification completed");
   }
-
-  private static final Function<String, String> retrieveNamespaceFromReleaseMessage =
-      releaseMessage -> {
-        if (Strings.isNullOrEmpty(releaseMessage)) {
-          return null;
-        }
-        List<String> keys = STRING_SPLITTER.splitToList(releaseMessage);
-        //message should be appId+cluster+namespace
-        if (keys.size() != 3) {
-          logger.error("message format invalid - {}", releaseMessage);
-          return null;
-        }
-        return keys.get(2);
-      };
 
   private void logWatchedKeys(Set<String> watchedKeys, String eventName) {
     for (String watchedKey : watchedKeys) {

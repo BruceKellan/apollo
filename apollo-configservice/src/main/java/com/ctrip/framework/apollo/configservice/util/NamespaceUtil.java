@@ -29,12 +29,10 @@ public class NamespaceUtil {
     if (appNamespace != null) {
       return appNamespace.getName();
     }
-
     appNamespace = appNamespaceServiceWithCache.findPublicNamespaceByName(namespaceName);
     if (appNamespace != null) {
       return appNamespace.getName();
     }
-
     return namespaceName;
   }
 }

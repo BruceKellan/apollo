@@ -6,9 +6,15 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
+ * Apollo 配置通知消息集合 DTO
  * @author Jason Song(song_s@ctrip.com)
  */
 public class ApolloNotificationMessages {
+  /**
+   * 明细 Map
+   * KEY ：{appId} "+" {clusterName} "+" {namespace} ，例如：100004458+default+application
+   * VALUE ：通知编号
+   */
   private Map<String, Long> details;
 
   public ApolloNotificationMessages() {

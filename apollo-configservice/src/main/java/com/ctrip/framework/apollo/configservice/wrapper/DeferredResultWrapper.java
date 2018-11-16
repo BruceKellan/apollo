@@ -13,16 +13,24 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 装饰者模式
  * @author Jason Song(song_s@ctrip.com)
  */
 public class DeferredResultWrapper {
-  private static final long TIMEOUT = 60 * 1000;//60 seconds
+  /**
+   * 60 seconds
+   */
+  private static final long TIMEOUT = 60 * 1000;
+
+  /**
+   * 默认返回302
+   */
   private static final ResponseEntity<List<ApolloConfigNotification>>
       NOT_MODIFIED_RESPONSE_LIST = new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
 
   private Map<String, String> normalizedNamespaceNameToOriginalNamespaceName;
-  private DeferredResult<ResponseEntity<List<ApolloConfigNotification>>> result;
 
+  private DeferredResult<ResponseEntity<List<ApolloConfigNotification>>> result;
 
   public DeferredResultWrapper() {
     result = new DeferredResult<>(TIMEOUT, NOT_MODIFIED_RESPONSE_LIST);
@@ -35,7 +43,6 @@ public class DeferredResultWrapper {
     normalizedNamespaceNameToOriginalNamespaceName.put(normalizedNamespaceName, originalNamespaceName);
   }
 
-
   public void onTimeout(Runnable timeoutCallback) {
     result.onTimeout(timeoutCallback);
   }
@@ -43,7 +50,6 @@ public class DeferredResultWrapper {
   public void onCompletion(Runnable completionCallback) {
     result.onCompletion(completionCallback);
   }
-
 
   public void setResult(ApolloConfigNotification notification) {
     setResult(Lists.newArrayList(notification));
@@ -58,7 +64,6 @@ public class DeferredResultWrapper {
           (notification.getNamespaceName())).forEach(notification -> notification.setNamespaceName(
               normalizedNamespaceNameToOriginalNamespaceName.get(notification.getNamespaceName())));
     }
-
     result.setResult(new ResponseEntity<>(notifications, HttpStatus.OK));
   }
 
